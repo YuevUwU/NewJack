@@ -1,0 +1,5 @@
+{
+  "python.analysis.languageServerMode": "full",
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "strict"
+}

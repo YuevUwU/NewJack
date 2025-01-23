@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug: Compile test4/test.nj",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/compiler/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "test4/test.nj",
+                "-c"
+            ]
+        }
+    ]
+}
