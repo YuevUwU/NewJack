@@ -1,3 +1,6 @@
 __pycache__/
 *.log
 __pypackages__/
+
+# call-graph.py
+test*.svg

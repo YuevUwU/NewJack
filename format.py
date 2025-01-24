@@ -132,7 +132,8 @@ def arg() -> None:
     main(path, type_)
 
 
-if len(argv) > 1:
-    arg()
-else:
-    no_arg()
+if __name__ == "__main__":
+    if len(argv) > 1:
+        arg()
+    else:
+        no_arg()

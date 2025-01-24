@@ -4,9 +4,12 @@ version = "0.1.0"
 requires-python = ">=3.8"
 description = "A dialect of Jack, influenced by C++ and Python."
 readme = "README.md"
-maintainers = [{ name = "su2u4", email = "Joey23.su@gmail.com" }]
+maintainers = [
+    {name = "su2u4", email = "Joey23.su@gmail.com"},
+]
 
 [dependency-groups]
 dev = [
-    "pylint>=3.2.7",
+    "pycallgraph2>=1.1.3",
+    "pylint>=3.2.7"
 ]

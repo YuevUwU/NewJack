@@ -123,13 +123,18 @@ def parse_arguments(args: str) -> Tuple[List[str], Args]:
     return paths, arg
 
 
-def main() -> Tuple[List[str], str]:
+def main(file: str | None = None) -> Tuple[List[str], str]:
+    if file is not None:
+        argv_ = ["main.py", file, "-c"]
+    else:
+        argv_ = argv
+
     errout: list[str] = []
     # parse arguments
-    if len(argv) == 1:
+    if len(argv_) == 1:
         args = input("File(s) path (input 'exit' to cancel): ")
     else:
-        args = " ".join(argv[1:])
+        args = " ".join(argv_[1:])
     paths, arg = parse_arguments(args)
     if len(paths) == 0:
         print("No valid input files provided. Use --help for usage information.")
