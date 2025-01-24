@@ -123,7 +123,7 @@ def parse_arguments(args: str) -> Tuple[List[str], Args]:
     return paths, arg
 
 
-def main(file: str | None = None) -> Tuple[List[str], str]:
+def main(file: str | None = None) -> Tuple[List[str], str, bool]:
     if file is not None:
         argv_ = ["main.py", file, "-c"]
     else:
@@ -138,14 +138,14 @@ def main(file: str | None = None) -> Tuple[List[str], str]:
     paths, arg = parse_arguments(args)
     if len(paths) == 0:
         print("No valid input files provided. Use --help for usage information.")
-        return errout, arg.errout
+        return errout, arg.errout, False
 
     # get file path
     try:
         files = get_path(paths)
     except FileNotFoundError as e:
         errout.append(f"input Error: {e}")
-        return errout, arg.errout
+        return errout, arg.errout, False
 
     # read source
     source_dict: dict[str, list[str]] = {}
@@ -174,7 +174,7 @@ def main(file: str | None = None) -> Tuple[List[str], str]:
         else:
             print(f"File {i} processed successfully")
     if failed:
-        return errout, arg.errout
+        return errout, arg.errout, False
 
     # add class and subroutine to the global
     for i in class_list:
@@ -189,9 +189,9 @@ def main(file: str | None = None) -> Tuple[List[str], str]:
         code = compile_all_file(class_list, global_, arg, source_dict, errout)
         if code == []:
             print("compile failed")
-            return errout, arg.errout
+            return errout, arg.errout, False
         elif arg.debug:
-            return errout, arg.errout
+            return errout, arg.errout, False
         else:
             print("compile end")
 
@@ -206,13 +206,14 @@ def main(file: str | None = None) -> Tuple[List[str], str]:
             print(f"Compile successful: {f_path}")
         except OSError as e:
             errout.append(f"output Error : {e}")
+            return errout, arg.errout, False
 
-    return errout, arg.errout
+    return errout, arg.errout, True
 
 
 if __name__ == "__main__":
     # output error info
-    errout, outpath = main()
+    errout, outpath, _ = main()
     errout = "\n".join(errout)
     if outpath == "":
         print(errout)
