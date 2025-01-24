@@ -175,3 +175,6 @@ cython_debug/
 
 # call-graph.py
 test*.svg
+
+# sphinx build
+docs/build

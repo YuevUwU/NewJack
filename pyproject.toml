@@ -7,6 +7,15 @@ readme = "README.md"
 maintainers = [
     {name = "su2u4", email = "Joey23.su@gmail.com"},
 ]
+dependencies = [
+    "myst-parser>=3.0.1",
+    "sphinx-book-theme>=0.0.39",
+    "sphinx-design>=0.5.0",
+    "sphinx-tabs>=3.4.7",
+    "sphinx-togglebutton>=0.3.2",
+    "sphinxcontrib-svg2pdfconverter[cairosvg]>=1.2.3",
+    "sphinxcontrib-youtube>=1.4.1",
+]
 
 [dependency-groups]
 dev = [
@@ -15,4 +24,5 @@ dev = [
     "pytest>=8.3.4",
     "pytest-cov>=5.0.0",
     "rich>=13.9.4",
+    "sphinx>=7.1.2",
 ]

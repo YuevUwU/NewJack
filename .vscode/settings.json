@@ -4,5 +4,16 @@
   "python.analysis.typeCheckingMode": "strict",
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
-  "python.testing.pytestArgs": ["--log-cli-level=DEBUG", "--capture=fd"]
+  "python.testing.pytestArgs": ["--log-cli-level=DEBUG", "--capture=fd"],
+  "liveServer.settings.root": "docs/build/html",
+  "triggerTaskOnSave.tasks": {
+    "doc_build": [
+      "docs/source/**"
+    ]
+  },
+  // The Sphinx `make clean html` command will remove
+  // the `docs/build/html` folder, so we need
+  // a delay to prevent the browser from detecting
+  // that the page is not found and untracking it.
+  "liveServer.settings.wait": 2000,
 }

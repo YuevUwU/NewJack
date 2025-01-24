@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "doc_build",
+            "command": "make",
+            // "args": ["html"],
+            // https://github.com/sphinx-doc/sphinx/issues/591
+            "args": ["clean", "html"],
+            "options": {
+                "cwd": "${workspaceFolder}/docs"
+            },
+        }
+    ]
+}

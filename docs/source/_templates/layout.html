@@ -1,0 +1,21 @@
+{% extends "sphinx_book_theme/layout.html" %}
+
+{% block css %}
+    {% set hide_prev = ["cli_usage/index.rst", "guide/index.rst", "reference/index.rst"] %}
+    {% set hide_next = ["index.rst", "cli_usage/index.rst", "guide/index.rst", "reference/index.rst"] %}
+    {% if sourcename in hide_prev %}
+        <style>
+            .left-prev  {
+                display: none !important;
+            }
+        </style>
+    {% endif %}
+    {% if sourcename in hide_next %}
+        <style>
+            .right-next  {
+                display: none !important;
+            }
+        </style>
+    {% endif %}
+    {{ super() }}
+{% endblock css %}
