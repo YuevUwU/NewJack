@@ -212,7 +212,7 @@ if len(argv) > 1:
         path = argv[1]
         main(path)
     elif len(argv) > 2:
-        print(f"path error (only one path): {" ".join(argv[1:])}")
+        print(f"path error (only one path): {' '.join(argv[1:])}")
     else:
         print(f"path error: no path")
 else:
