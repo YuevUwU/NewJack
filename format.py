@@ -87,7 +87,7 @@ def format_vm(code: List[str]) -> List[str]:
     return new_code
 
 
-def main(path: str, type_: str) -> None:
+def main(path: str, type_: str = "") -> None:
     new_code = []
     if isfile(path):
         paths = [path]
@@ -116,24 +116,13 @@ def main(path: str, type_: str) -> None:
             f.write("\n".join(new_code))
 
 
-def no_arg() -> None:
-    main(*input("file path: ").split(maxsplit=1))
-
-
-def arg() -> None:
-    if len(argv) >= 2:
-        path = argv[1]
-    else:
-        print("file path is required")
-        return
-    type_ = ""
-    if len(argv) >= 3:
-        type_ = argv[2]
-    main(path, type_)
-
-
 if __name__ == "__main__":
-    if len(argv) > 1:
-        arg()
-    else:
-        no_arg()
+    match len(argv):
+        case 0:
+            main(*input("file path: ").split(maxsplit=1))
+        case 1:
+            print("file path is required")
+        case 2:
+            main(path=argv[1])
+        case _:
+            main(path=argv[1], type_=argv[2])
