@@ -4,5 +4,12 @@
   "python.analysis.typeCheckingMode": "strict",
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
-  "python.testing.pytestArgs": ["--log-cli-level=DEBUG", "--capture=fd"]
+  "testing.showAllMessages": true,
+  "cmake.ctest.allowParallelJobs": true,
+  "testing.defaultGutterClickAction": "runWithCoverage",
+  "testing.gutterEnabled": false,
+  "testing.alwaysRevealTestOnStateChange": true,
+  "coverage-gutters.highlightdark": "rgba(0, 255, 30, 0.4)",
+  "coverage-gutters.noHighlightDark": "rgba(255, 0, 0, 0.4)",
+  "coverage-gutters.partialHighlightDark": "rgba(255, 255, 0, 0.4)"
 }

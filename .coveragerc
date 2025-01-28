@@ -1,0 +1,94 @@
+; Format: INI
+; Reference and Modified from https://coverage.readthedocs.io/en/7.6.10/config.html
+; Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+; For details: https://github.com/nedbat/coveragepy/blob/master/NOTICE.txt
+
+; Also Reference from https://pytest-cov.readthedocs.io/en/latest/config.html
+
+[run]
+branch = true
+command_line = -m pytest
+; concurrency =
+;     thread
+; context = true  ; we use `--cov-branch` in `pyproject.toml`
+; dynamic_context = test_function  ; we use `--cov-context` by pytest-cov
+; cover_pylib = false
+; data_file = .coverage
+disable_warnings =
+    no-data-collected
+; debug =
+;     sys
+; debug_file = cov_debug_report.txt
+; include =
+;     test_*.py  ; ignore because --source is set
+; omit =
+;     */__init__.py ; same as [report] skip-empty = true
+; parallel = false  ; pytest-cov will override it
+; plugins =
+;
+; relative_files = true  ; vscode won't find the file (skull)
+; sigterm = false
+; source =
+;     format.py
+source_pkgs =
+    compiler
+    format
+; timid = false
+
+[paths]
+; source =
+;     src/
+;     /jenkins/build/*/src
+;     C:\myproj\src
+
+[report]
+; exclude_also =
+;     def __repr__
+;     if self.debug:
+;     if settings.DEBUG
+;     raise AssertionError
+;     raise NotImplementedError
+;     if 0:
+;     if __name__ == .__main__.:
+;     if TYPE_CHECKING:
+;     class .*\bProtocol\):
+;     @(abc\.)?abstractmethod
+; exclude_lines = pragma： no cover ; `exclude_lines` will overwrite all includes `pragma： no cover`, but `exclude_also` instead.
+fail_under = 0
+format = markdown
+; ignore_errors = false
+; include =
+;     */.local/*
+;
+; include_namespace_packages = false
+; omit =
+;     /usr/*
+; partial_branches =
+; next\(i in range\(.+\)\)
+precision = 2
+; show_missing = false
+; skip_covered = false
+skip_empty = true
+; source =
+;     utils/tirefire.py
+
+[html]
+; directory = htmlcov
+; extra_css = extra.css
+show_contexts = true
+; skip_covered = false ; defaulted from [report] skip_covered
+; skip_empty = false ; defaulted from [report] skip_empty
+; title = Coverage report
+
+[xml]
+output = coverage.xml
+; package_depth = 99    ; 99 = all directories
+
+[json]
+; output = coverage.json
+pretty_print = true
+show_contexts = true
+
+[lcov]
+; output = coverage.lcov
+; line_checksums = false
