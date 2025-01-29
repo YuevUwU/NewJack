@@ -207,13 +207,14 @@ def main(path: str) -> None:
         f.write(bytes(int(asm[i : i + 8], 2) for i in range(0, len(asm), 8)))
 
 
-if len(argv) > 1:
-    if len(argv) == 2:
-        path = argv[1]
-        main(path)
-    elif len(argv) > 2:
-        print(f"path error (only one path): {' '.join(argv[1:])}")
+if __name__ == "__main__":
+    if len(argv) > 1:
+        if len(argv) == 2:
+            path = argv[1]
+            main(path)
+        elif len(argv) > 2:
+            print(f"path error (only one path): {' '.join(argv[1:])}")
+        else:
+            print(f"path error: no path")
     else:
-        print(f"path error: no path")
-else:
-    main(input("file path: "))
+        main(input("file path: "))

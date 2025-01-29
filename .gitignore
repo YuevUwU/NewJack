@@ -180,3 +180,8 @@ cython_debug/
 
 # call-graph.py
 test*.svg
+
+# assemblied code
+o0.vm
+o1.vm
+o2.vm
