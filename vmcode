@@ -8,17 +8,17 @@ code:
 
     copy $[a] $[b]
     2 byte
-    001 + [register a](3 bit) + [register b](3 bit) + 0_or_1(7 bit)
+    001 + [register a](3 bit) + [register b](3 bit) + 0000000(7 bit)
         - Copy the value of register $[a] to register $[b]
 
     jump $[a] $[b]
     2 byte
-    010 + [register a](3 bit) + [register b](3 bit) + 0_or_1(7 bit)
+    010 + [register a](3 bit) + [register b](3 bit) + 0000000(7 bit)
         - If register $[b] contains True, jump to the address in $[a]
 
     comp $[a] [C-code] $[b]
     2 byte
-    011 + [register a](3 bit) + [jump code](3 bit) + [register b](3 bit) + 0_or_1(4 bit)
+    011 + [register a](3 bit) + [comp code](3 bit) + [register b](3 bit) + 0000(4 bit)
         - Save the result of the C-code comparison to register $C
         - C-code:
             000 nv Never
@@ -32,7 +32,7 @@ code:
 
     [operation]r $[a] $[b] $[c]
     2 byte
-    100 [operation](3 bit) + [register a](3 bit) + [register b](3 bit) + [register c](3 bit) + 0_or_1(1 bit)
+    100 [operation](3 bit) + [register a](3 bit) + [register b](3 bit) + [register c](3 bit) + 0
         - Perform the specified operation on $[a] and $[b], and save the result in $[c]
         - operation:
             000 add
@@ -42,18 +42,18 @@ code:
             100 rmv  # right shift
             101 lmv  # left shift
             110 and
-            111 or 
+            111 or
 
     exte [value]
     2 byte
-    101 + [value](15 bit) + extend_or_not(1 bit)
+    101 + [value](12 bit) + extend_or_not(1 bit)
         - If extend_or_not == 1, add the given value to the current extendable value
         - The value can be extended
         - for the value of inpv and the value of exte
 
     sett [0~7]
-    1 byte
-    110 + [0~7](3 bit) + 0_or_1(2 bit)
+    2 byte
+    110 + [0~7](3 bit) + 0000000000(10 bit)
         - Specify which of the 8 sub-registers in $T to use
 
 register:
@@ -83,13 +83,11 @@ register:
         - Operate on the address pointed to by the specified register
 
 syntactic sugar:
+    # use $V, $A, $M, $C
+
     setv $[a] [value]
         inpv [value]
         copy $V $[a]
-
-    j-if $[a] $[b] [C-code] $[c]
-        comp $[b] [C-code] $[c]
-        jump $[a] $C
 
     load @[a] $[b]
         - Equivalent to: copy @[a] $[b]
@@ -116,13 +114,15 @@ syntactic sugar:
 
 non-standard syntactic sugar:
     - Uses general-purpose registers and is therefore marked as "non-standard"
+    - use $D, $P, $V, $C, $T(t7)
 
     push @[a] [value]
         - Push the value at @[a] offset by [value] onto the stack
-        sett 7
-        addv $[a] [value] $T
-        load @T $D
-        sett 0
+        if value < 0:
+            subv $[a] [value] $D
+        else:
+            addv $[a] [value] $D
+        load @D $D
         stor @P $D
         addv $P 1 $P
 
@@ -139,7 +139,10 @@ non-standard syntactic sugar:
 
     push $[a] [value]
         - Push the value of $[a] + [value] onto the stack
-        addv $[a] [value] $D
+        if value < 0:
+            subv $[a] [value] $D
+        else:
+            addv $[a] [value] $D
         stor @P $D
         addv $P 1 $P
 
@@ -153,7 +156,10 @@ non-standard syntactic sugar:
         subv $P 1 $P
         load @P $D
         sett 7
-        addv $[a] [value] $T
+        if value < 0:
+            subv $[a] [value] $T
+        else:
+            addv $[a] [value] $T
         stor @T $D
         sett 0
 
@@ -184,14 +190,68 @@ non-standard syntactic sugar:
     label [label]
         setl [label]
 
-    alloc [value]
-        - Allocate memory of size [value] from the heap and return the base address
-        - Return the base address: Push the address onto the stack pointed to by $P
-
     call [function name] [number of argument]
         - Jump to the address of [function name]
         - Read arguments from $P and decrement $P by [number of argument]
+        copy $P $T
+        subv $T [number of argument] $T
+        getl $D [function name]
+        push $D
+        push @L -4
+        push $P -2
+        push $L
+        # stor @P $D
+        # addv $P 1 $P
+        # subv $L 4 $D
+        # load @D $D
+        # stor @P $D
+        # addv $P 1 $P
+        # subv $P 2 $D
+        # stor @P $D
+        # addv $P 1 $P
+        # stor @P $L
+        # addv $P 1 $P
+        sett 1
+        copy $P $T
+        sett 0
+        for i in range([number of argument]):
+            push @T i
+            # addv $T i $D
+            # load @D $D
+            # stor @P $D
+            # addv $P 1 $P
+        sett 1
+        copy $T $L
+        sett 0
+        getl $D [function name]
+        inpv 1
+        jump $D $V
 
     return
         - Jump back to the previous address
         - Push the return value onto the stack pointed to by $P
+        pop $T
+        # subv $P 1 $P
+        # load @P $D
+        # copy $T $D
+        subv $L 3 $L
+        load @L $D
+        addv $L 1 $L
+        load @L $P
+        addv $L 1 $L
+        load @L $L
+        inpv 1
+        jump $D $V
+        push $T
+        # stor @P $T
+        # addv $P 1 $P
+
+    # Stack frame structure:
+    # 0 -> now address
+    # 1 -> return address
+    # 2 -> old $P
+    # 3 -> old $L
+    # 4 -> arg <- $L 0
+    # ...
+    # n -> arg <- $L n-4
+    # n+1 -> 0 <- $P

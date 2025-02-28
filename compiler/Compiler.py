@@ -3,11 +3,11 @@ from typing import Literal, List, Tuple, Union
 
 from compiler.AST import *
 from compiler.lib import CompileError, CompileErrorGroup, Info, type_int, type_void, format_traceback, none
-from compiler.built_in import built_in_function, built_in_class
+from built_in.built_in import built_in_function, built_in_class
 
 
 class Compiler:
-    def __init__(self, global_: Global, errout: List[str], debug_flag: bool = False) -> None:
+    def __init__(self, global_: List[DeclareVar], errout: List[str], debug_flag: bool = False) -> None:
         self.global_: dict[str, Tuple[Type, int]] = {}
         self.subroutine: dict[str, Tuple[Type, Literal["class", "constructor", "function", "method"]]] = {}
         self.subroutine.update(built_in_function)
@@ -28,19 +28,12 @@ class Compiler:
         }
         self.now_subroutine: Subroutine = Subroutine(none, "method", Type(none), [], [])
         self.loop: List[int] = []
+        self.loop_n: List[int] = []
         self.debug_flag = debug_flag
         self.code: List[str] = ["debug-label start"]
         self.errout = errout
         self.now_class: Class = Class(none, [], [], "")
-        self.declare(global_.global_variable)
-        self.now_class: Class = Class(none, [], [], global_.enter_file)
-        if global_.enter is not None:
-            self.code.append("label enter")
-            self.now_subroutine.name = Identifier("enter")
-            self.local["enter"] = {}
-            self.argument["enter"] = {}
-            for i in global_.enter:
-                self.code.extend(self.compileStatement(i))
+        self.declare(global_)
         if len(self.err_list) > 0:
             raise CompileErrorGroup(self.err_list)
         if self.debug_flag:
@@ -59,11 +52,9 @@ class Compiler:
         code: List[str] = []
         self.err_list = []
         try:
-            # compile class
             code.append(f"debug-label start {c.file_name}.{c.name}")
             code.extend(self.compileClass(c))
             code.append(f"debug-label end {c.file_name}.{c.name}")
-        # show error info
         except Exception as e:
             self.errout.append("------------------------------")
             self.errout.append(format_traceback(e))
@@ -90,16 +81,13 @@ class Compiler:
         for var in vars:
             if var.kind in ("class", "constructor", "function", "method"):
                 if var.kind == "class":
-                    self.count["attribute"] = 0
+                    if str(var.name) not in self.attribute:
+                        self.count["attribute"] = 0
+                        self.attribute[str(var.name)] = {}
                     self.now_class = Class(var.name, [], [], "")
-                    self.attribute[str(var.name)] = {}
                 self.subroutine[str(var.name)] = (var.type, var.kind)
                 self.count["subroutine"] += 1
                 continue
-            # elif var.kind == "method":
-            #     t = self.attribute[str(self.now_class.name)]
-            #     self.subroutine[str(var.name)] = (var.type, var.kind)
-            #     var.kind = "subroutine"
             elif var.kind == "global":
                 t = self.global_
             elif var.kind == "attribute":
@@ -112,9 +100,11 @@ class Compiler:
             self.count[var.kind] += 1
 
     def returncode(self) -> List[str]:
-        self.code.insert(1, f"alloc {self.count['global']}")
-        self.code.insert(2, "inpv [global address]")
-        self.code.insert(3, "pop @V")
+        if self.count["global"] != 0:
+            self.code.insert(1, f"push {self.count['global']}")
+            self.code.insert(2, f"call built_in.alloc 1")
+            self.code.insert(3, "inpv 0")
+            self.code.insert(4, "pop @V")
         self.code.append("debug-label end")
         return self.code
 
@@ -127,6 +117,7 @@ class Compiler:
 
     def compileSubroutine(self, subroutine: Subroutine) -> List[str]:
         code: List[str] = []
+        self.loop_n.append(0)
         if str(subroutine.name).startswith(str(self.now_class.name) + "."):
             code.append(f"label {subroutine.name}")
         else:
@@ -140,14 +131,15 @@ class Compiler:
             self.argument[str(subroutine.name)]["self"] = (Type(self.now_class.name), 0)
             self.count["argument"] += 1
         if subroutine.kind == "constructor":
-            code.append(f"alloc {len(self.attribute[str(self.now_class.name)])}")
+            code.append(f"push {len(self.attribute[str(self.now_class.name)])}")
+            code.append(f"call built_in.alloc 1")
             code.append("pop @L 0")
-        for i in subroutine.argument_list:
-            self.declare(i)
+        self.declare(subroutine.argument_list)
         for i in subroutine.statement_list:
             code.extend(self.compileStatement(i))
         del self.argument[str(subroutine.name)]
         del self.local[str(subroutine.name)]
+        self.loop_n.pop()
         return code
 
     def compileStatement(self, statement: Statement) -> List[str]:
@@ -173,21 +165,33 @@ class Compiler:
 
     def compileVar_S(self, var: Var_S) -> List[str]:
         code: List[str] = []
-        for i in var.var_list:
-            assert i.kind == "local"
         if len(var.var_list) < len(var.expression_list):
             self.error("'value' redundant 'variable'", var.location)
         for i, j in zip(var.var_list, var.expression_list):
-            self.declare(i)
-            t = self.count["local"] + self.count["argument"] - 1
             code.extend(self.compileExpression(j))
-            code.append(f"pop @L {t}")
+            if i.kind == "global":
+                code.append("inpv 0")
+                code.append(f"pop @V {self.global_[str(i.name)][1]}")
+            elif i.kind == "attribute":
+                code.append("push @L 0")
+                code.append("pop $D")
+                code.append(f"pop @D {self.attribute[str(self.now_class.name)][str(i.name)][1]}")
+            else:
+                self.declare(i)
+                code.append(f"pop @L {self.count["local"] + self.count["argument"] - 1}")
         if len(var.var_list) > len(var.expression_list):
             for i in var.var_list[len(var.expression_list) :]:
-                self.declare(i)
-                t = self.count["local"] + self.count["argument"] - 1
                 code.append("push 0")
-                code.append(f"pop @L {t}")
+                if i.kind == "global":
+                    code.append("inpv 0")
+                    code.append(f"pop @V {self.global_[str(i.name)][1]}")
+                elif i.kind == "attribute":
+                    code.append("push @L 0")
+                    code.append("pop $D")
+                    code.append(f"pop @D {self.attribute[str(self.now_class.name)][str(i.name)][1]}")
+                else:
+                    self.declare(i)
+                    code.append(f"pop @L {self.count["local"] + self.count["argument"] - 1}")
         return code
 
     def compileDo_S(self, do: Do_S) -> List[str]:
@@ -232,6 +236,7 @@ class Compiler:
         n = self.count["loop"]
         self.count["loop"] += 1
         self.loop.append(n)
+        self.loop_n[-1] += 1
         code.append(f"label while_start_{n}")
         code.extend(self.compileExpression(while_.conditional))
         if while_.else_:
@@ -246,6 +251,7 @@ class Compiler:
             for s in while_.else_statement_list:
                 code.extend(self.compileStatement(s))
         code.append(f"label loop_end_{n}")
+        self.loop_n[-1] -= 1
         if self.loop.pop() != n:
             self.error("loop level error", while_.location)
         return code
@@ -255,6 +261,7 @@ class Compiler:
         n = self.count["loop"]
         self.count["loop"] += 1
         self.loop.append(n)
+        self.loop_n[-1] += 1
         cn = self.count["local"]
         self.count["local"] += 1
         self.local[str(self.now_subroutine.name)][str(for_.for_count_integer)] = (type_int, cn)
@@ -275,6 +282,7 @@ class Compiler:
             for s in for_.else_statement_list:
                 code.extend(self.compileStatement(s))
         code.append(f"label loop_end_{n}")
+        self.loop_n[-1] -= 1
         if self.loop.pop() != n:
             self.error("loop level error", for_.location)
         return code
@@ -292,7 +300,7 @@ class Compiler:
         return code
 
     def compileBreak_S(self, break_: Break_S) -> List[str]:
-        if len(self.loop) < int(break_.n):
+        if self.loop_n[-1] < int(break_.n):
             self.error("The break statement must be inside a loop", break_.location)
             return []
         else:
@@ -385,18 +393,23 @@ class Compiler:
     def compileCall(self, call: Call) -> List[str]:
         code: List[str] = []
         var_info = self.GetVarInfo(call.var)
-        if var_info.kind == "method":
-            code.append("\n".join(var_info.code))
-        elif var_info.kind == "constructor":
-            code.append("push 0")
-        elif var_info.kind != "function":
-            self.error(f"variable {call.var} is not method, function or constructor", call.var.location)
-        for i in call.expression_list:
-            code.extend(self.compileExpression(i))
-        if var_info.kind != "function":
-            code.append(f"call {var_info.name} {len(call.expression_list) + 1}")
+        if var_info.name == "arr.new":
+            for i in call.expression_list:
+                code.extend(self.compileExpression(i))
+            code.append("call built_in.alloc 1")
         else:
-            code.append(f"call {var_info.name} {len(call.expression_list)}")
+            if var_info.kind == "method":
+                code.append("\n".join(var_info.code))
+            elif var_info.kind == "constructor":
+                code.append("push 0")
+            elif var_info.kind != "function":
+                self.error(f"variable {call.var} is not method, function or constructor", call.var.location)
+            for i in call.expression_list:
+                code.extend(self.compileExpression(i))
+            if var_info.kind != "function":
+                code.append(f"call {var_info.name} {len(call.expression_list) + 1}")
+            else:
+                code.append(f"call {var_info.name} {len(call.expression_list)}")
         return code
 
     def GetVarInfo(self, var: Variable, addr: bool = False) -> Info:
@@ -419,7 +432,7 @@ class Compiler:
             elif str(var.var) in self.global_:
                 var_info.type = self.global_[str(var.var)][0]
                 var_info.kind = "global"
-                var_info.code.append("inpv [global address]")
+                var_info.code.append("inpv 0")
                 t = f"V {self.global_[str(var.var)][1]}"
             elif str(var.var) in self.subroutine:
                 var_info.type = Type(Identifier(self.subroutine[str(var.var)][1]))

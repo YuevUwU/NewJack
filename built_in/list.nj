@@ -1,0 +1,35 @@
+class list {
+    constructor list new(pass) {
+        attr arr[int] data = arr.new(10);
+        attr int max_size = 10;
+        attr int size = 0;
+        return self;
+    }
+    method void append(int a) {
+        if (self.size == self.max_size) {
+            do self.get_memory(pass);
+        }
+        let self.data[self.size] = a;
+        let self.size = self.size + 1;
+        return;
+    }
+    method void get_memory(pass) {
+        let self.max_size = self.max_size * 2;
+        var arr[int] new_data = arr.new(self.max_size);
+        for (i, self.size) {
+            let new_data[i] = self.data[i];
+        }
+        let self.data = new_data;
+        return;
+    }
+    method int get(int i) {
+        return self.data[i];
+    }
+    method void set(int i, int a) {
+        let self.data[i] = a;
+        return;
+    }
+    method int size(pass) {
+        return self.size;
+    }
+}
