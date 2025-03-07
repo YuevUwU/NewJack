@@ -39,9 +39,21 @@ def test_formatter_vm_success(name: str):
 
 
 # @pytest.mark.depends(on=["test_formatter_nj_success"])
-@parametrize("name", INTEGRATION_TEST_CASES, "assembler")
-def test_assembler_success(name: str):
-    assert TestSuite.Assembler().test(name)
+@parametrize("name", INTEGRATION_TEST_CASES, "assembler_o1")
+def test_assembler_o1_success(name: str):
+    assert TestSuite.AssemblerO1().test(name)
+
+
+# @pytest.mark.depends(on=["test_formatter_nj_success"])
+@parametrize("name", INTEGRATION_TEST_CASES, "assembler_o2")
+def test_assembler_o2_success(name: str):
+    assert TestSuite.AssemblerO2().test(name)
+
+
+# @pytest.mark.depends(on=["test_formatter_nj_success"])
+@parametrize("name", INTEGRATION_TEST_CASES, "assembler_o3")
+def test_assembler_o3_success(name: str):
+    assert TestSuite.AssemblerO3().test(name)
 
 
 # @pytest.mark.depends(on=["test_formatter_nj_success"])

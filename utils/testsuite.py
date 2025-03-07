@@ -31,6 +31,13 @@ class TestExpectancy(Enum):
 
     def __bool__(self):
         return self.value
+    
+    def __str__(self) -> str:
+        return self.name
+    
+    @staticmethod
+    def from_bool(bool: bool):
+        return SUCCESS if bool else FAIL
 
 
 SUCCESS = TestExpectancy.SUCCESS
@@ -49,9 +56,11 @@ class Test(ABC):
     def test(self, name: str) -> bool:
         """Run the test and handle output and exceptions."""
         try:
-            success, output = self.run_test(name)
-
-            if success == self.expected:
+            is_success, output = self.run_test(name)
+            
+            formatted_output = "\n".join(output.split("\n"))
+            
+            if is_success == self.expected:
                 logger.info(
                     "✅ Test '%sTest %s' passed as expected!",
                     self.__class__.__name__,
@@ -60,14 +69,19 @@ class Test(ABC):
             else:
                 pytest.fail(
                     f"❌ Test '{self.__class__.__name__} {name}' did not meet the expected outcome. \n"
-                    f"(expected: {self.expected}, actual: {success})"
+                    f"(expected: {self.expected}, actual: {TestExpectancy.from_bool(is_success)})\n"
+                    "========== Output ==========\n"
+                    f"{formatted_output}"
                 )
 
             if output:
                 logger.debug("========== Output ==========")
-                logger.debug("\n".join(output.split("\n")))
+                logger.debug(formatted_output)
+            else:
+                logger.debug("========== Output ==========")
+                logger.debug("No output received.")
 
-            return success
+            return is_success
         except Exception as e:  # pylint: disable=broad-exception-caught
             pytest.fail(f"Test failed: \n{e}")
 
@@ -104,9 +118,19 @@ class FormatterVMTest(Test):
         return True, ""
 
 
-class AssemblerTest(Test):
+class AssemblerO1Test(Test):
     def run_test(self, name: str):
-        assembler.main(f"{name}.nj")
+        assembler.main(f"{name}.nj", [True, False, False])
+        return True, ""
+
+class AssemblerO2Test(Test):
+    def run_test(self, name: str):
+        assembler.main(f"{name}.nj", [False, True, False])
+        return True, ""
+
+class AssemblerO3Test(Test):
+    def run_test(self, name: str):
+        assembler.main(f"{name}.nj", [False, False, True])
         return True, ""
 
 
@@ -116,4 +140,6 @@ class TestSuite:
     Compiler = CompilerTest
     FormatterNJ = FormatterNJTest
     FormatterVM = FormatterVMTest
-    Assembler = AssemblerTest
+    AssemblerO1 = AssemblerO1Test
+    AssemblerO2 = AssemblerO2Test
+    AssemblerO3 = AssemblerO3Test
